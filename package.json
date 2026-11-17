@@ -1,0 +1,57 @@
+{
+  "name": "auraflow-ai",
+  "version": "1.0.0",
+  "description": "SmartSpectra-powered human-sensing wellness desktop application",
+  "author": "AuraFlow AI Team",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "@smartspectra/node-sdk": "^3.4.0",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "typescript": "~5.6.3",
+    "vite": "^6.0.1",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "ai.auraflow.desktop",
+    "productName": "AuraFlow AI",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/koffi/**/*",
+      "node_modules/@smartspectra/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "signAndEditExecutable": false,
+      "extraResources": [
+        {
+          "from": "node_modules/@smartspectra/node-sdk-win32-x64/",
+          "to": "smartspectra/"
+        }
+      ]
+    }
+  }
+}
