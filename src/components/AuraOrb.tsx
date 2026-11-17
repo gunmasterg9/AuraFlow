@@ -138,19 +138,27 @@ export const AuraOrb: React.FC<AuraOrbProps> = ({
   ) => {
     const cx = w / 2;
     const cy = h / 2 - 8;
-    const baseRadius = (Math.min(w, h) / 2) * 0.8;
+    const baseRadius = (Math.min(w, h) / 2) * 0.76;
     const r = baseRadius * scale;
 
     // 1. Gentle Deep-Blue Ambient Space Nebula Behind the Sphere
+    // Smoothly fades to 0 before canvas boundaries to eliminate any box seams
     ctx.save();
-    const bgGlow = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 1.55);
-    bgGlow.addColorStop(0, `rgba(18, 65, 215, ${0.45 * glow})`);
-    bgGlow.addColorStop(0.42, `rgba(80, 30, 190, ${0.22 * glow})`);
-    bgGlow.addColorStop(0.75, `rgba(8, 20, 80, ${0.08 * glow})`);
+    const bgGlow = ctx.createRadialGradient(
+      cx + r * 0.25,
+      cy - r * 0.3,
+      r * 0.2,
+      cx,
+      cy,
+      r * 1.22
+    );
+    bgGlow.addColorStop(0, `rgba(28, 85, 245, ${0.44 * glow})`);
+    bgGlow.addColorStop(0.45, `rgba(18, 55, 185, ${0.22 * glow})`);
+    bgGlow.addColorStop(0.85, `rgba(8, 24, 90, ${0.05 * glow})`);
     bgGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = bgGlow;
     ctx.beginPath();
-    ctx.arc(cx, cy, r * 1.6, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r * 1.22, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 
@@ -197,54 +205,85 @@ export const AuraOrb: React.FC<AuraOrbProps> = ({
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
     const plumeGrad = ctx.createRadialGradient(
-      cx + r * 0.42,
-      cy + r * 0.06,
+      cx + r * 0.56,
+      cy + r * 0.04,
       0,
-      cx + r * 0.42,
-      cy + r * 0.06,
-      r * 0.64
+      cx + r * 0.56,
+      cy + r * 0.04,
+      r * 0.58
     );
-    plumeGrad.addColorStop(0, `rgba(168, 85, 247, ${0.52 * glow})`);
-    plumeGrad.addColorStop(0.36, `rgba(225, 29, 72, ${0.35 * glow})`);
-    plumeGrad.addColorStop(0.72, `rgba(249, 115, 22, ${0.16 * glow})`);
+    plumeGrad.addColorStop(0, `rgba(236, 72, 153, ${0.48 * glow})`);
+    plumeGrad.addColorStop(0.32, `rgba(244, 63, 94, ${0.42 * glow})`);
+    plumeGrad.addColorStop(0.68, `rgba(249, 115, 22, ${0.28 * glow})`);
     plumeGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = plumeGrad;
     ctx.beginPath();
-    ctx.arc(cx + r * 0.42, cy + r * 0.06, r * 0.64, 0, Math.PI * 2);
+    ctx.arc(cx + r * 0.56, cy + r * 0.04, r * 0.58, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 
-    // 3C. Delicate Optical Interference Filaments (Fine horizontal caustics threads)
+    // 3C. 3D Holographic Longitudinal Meridians & Micro-Caustic Filaments
+    // Renders the dense curved spherical meridian threads visible across the reference artwork
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
-    for (let i = 0; i < 18; i++) {
-      const lineProgress = i / 17;
-      const yOffset = (lineProgress - 0.48) * r * 0.76;
-      const waveAlpha = (0.1 + Math.sin(lineProgress * Math.PI) * 0.16) * glow;
+    const numMeridians = 44;
+    for (let i = 0; i <= numMeridians; i++) {
+      const u = (i / numMeridians) * 2 - 1; // -1.0 (left rim) to +1.0 (right rim)
+      const absU = Math.abs(u);
+      if (absU < 0.02) continue;
 
-      const waveGrad = ctx.createLinearGradient(cx - r * 0.65, 0, cx + r * 0.65, 0);
+      const curveX = cx + u * r * 0.93;
+      const alpha = (0.035 + Math.pow(absU, 1.4) * 0.14) * glow;
+      const strokeCol =
+        u < -0.15
+          ? `rgba(220, 130, 245, ${alpha * 0.85})`
+          : u > 0.22
+          ? `rgba(251, 146, 60, ${alpha * 0.75})`
+          : `rgba(56, 189, 248, ${alpha})`;
+
+      ctx.strokeStyle = strokeCol;
+      ctx.lineWidth = 0.65;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - r * 0.96);
+      ctx.bezierCurveTo(
+        curveX,
+        cy - r * 0.52,
+        curveX,
+        cy + r * 0.52,
+        cx,
+        cy + r * 0.96
+      );
+      ctx.stroke();
+    }
+
+    // Secondary subtle horizontal caustic wave threads
+    for (let i = 0; i < 10; i++) {
+      const lineProgress = i / 9;
+      const yOffset = (lineProgress - 0.48) * r * 0.65;
+      const waveAlpha = (0.08 + Math.sin(lineProgress * Math.PI) * 0.12) * glow;
+
+      const waveGrad = ctx.createLinearGradient(cx - r * 0.55, 0, cx + r * 0.55, 0);
       waveGrad.addColorStop(0, 'rgba(56, 189, 248, 0)');
-      waveGrad.addColorStop(0.25, `rgba(56, 189, 248, ${waveAlpha * 0.85})`);
-      waveGrad.addColorStop(0.55, `rgba(168, 85, 247, ${waveAlpha})`);
-      waveGrad.addColorStop(0.82, `rgba(236, 72, 153, ${waveAlpha * 0.9})`);
+      waveGrad.addColorStop(0.3, `rgba(56, 189, 248, ${waveAlpha * 0.85})`);
+      waveGrad.addColorStop(0.6, `rgba(168, 85, 247, ${waveAlpha})`);
       waveGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
 
       ctx.strokeStyle = waveGrad;
-      ctx.lineWidth = 0.75;
+      ctx.lineWidth = 0.7;
       ctx.beginPath();
-      const startX = cx - r * 0.62;
-      const endX = cx + r * 0.62;
+      const startX = cx - r * 0.52;
+      const endX = cx + r * 0.52;
       const py = cy + yOffset;
-      const waveDrift = Math.sin(time * 0.8 + i * 0.3) * 3.5;
+      const waveDrift = Math.sin(time * 0.8 + i * 0.3) * 2.5;
 
       ctx.moveTo(startX, py);
       ctx.bezierCurveTo(
-        cx - r * 0.28,
-        py - 14 + waveDrift,
-        cx + r * 0.22,
-        py + 12 - waveDrift,
+        cx - r * 0.22,
+        py - 8 + waveDrift,
+        cx + r * 0.18,
+        py + 8 - waveDrift,
         endX,
-        py - 4
+        py - 2
       );
       ctx.stroke();
     }
@@ -255,11 +294,11 @@ export const AuraOrb: React.FC<AuraOrbProps> = ({
     ctx.globalCompositeOperation = 'screen';
 
     // Formation 1: Left Aurora Ribbon (Warm Amber, Rose, Magenta Flame)
-    // Starts lower-left, curves gently upward hugging the left contour, tapers out in upper volume
-    const p1_start = { x: cx - r * 0.54, y: cy + r * 0.62 };
-    const p1_c1 = { x: cx - r * 0.72, y: cy + r * 0.2 };
-    const p1_c2 = { x: cx - r * 0.58, y: cy - r * 0.16 };
-    const p1_end = { x: cx - r * 0.3, y: cy - r * 0.44 };
+    // Starts lower-left, hugs the left contour upward, curls inward at the top-left crest
+    const p1_start = { x: cx - r * 0.44, y: cy + r * 0.72 };
+    const p1_c1 = { x: cx - r * 0.68, y: cy + r * 0.24 };
+    const p1_c2 = { x: cx - r * 0.64, y: cy - r * 0.22 };
+    const p1_end = { x: cx - r * 0.45, y: cy - r * 0.16 };
 
     const ribbon1Grad = ctx.createLinearGradient(
       p1_start.x,
@@ -268,72 +307,77 @@ export const AuraOrb: React.FC<AuraOrbProps> = ({
       p1_end.y
     );
     ribbon1Grad.addColorStop(0, '#f97316');
-    ribbon1Grad.addColorStop(0.25, '#f43f5e');
-    ribbon1Grad.addColorStop(0.65, '#e879f9');
+    ribbon1Grad.addColorStop(0.28, '#f43f5e');
+    ribbon1Grad.addColorStop(0.68, '#e879f9');
     ribbon1Grad.addColorStop(1, '#a855f7');
 
     // Pass 1: Broad diffuse glow
     ctx.strokeStyle = ribbon1Grad;
-    ctx.lineWidth = 26 * scale;
-    ctx.globalAlpha = 0.28 * glow;
+    ctx.lineWidth = 28 * scale;
+    ctx.globalAlpha = 0.32 * glow;
     ctx.beginPath();
     ctx.moveTo(p1_start.x, p1_start.y);
     ctx.bezierCurveTo(p1_c1.x, p1_c1.y, p1_c2.x, p1_c2.y, p1_end.x, p1_end.y);
     ctx.stroke();
 
     // Pass 2: Soft volumetric body
-    ctx.lineWidth = 12 * scale;
-    ctx.globalAlpha = 0.62 * glow;
+    ctx.lineWidth = 14 * scale;
+    ctx.globalAlpha = 0.68 * glow;
     ctx.stroke();
 
     // Pass 3: Luminous core
-    ctx.lineWidth = 3.6 * scale;
-    ctx.globalAlpha = 0.92 * glow;
+    ctx.lineWidth = 4.2 * scale;
+    ctx.globalAlpha = 0.94 * glow;
     ctx.stroke();
 
     // Pass 4: Specular highlight spine
     ctx.strokeStyle = '#fff1f2';
-    ctx.lineWidth = 1.3;
-    ctx.globalAlpha = 0.98 * glow;
+    ctx.lineWidth = 1.4;
+    ctx.globalAlpha = 0.96 * glow;
     ctx.stroke();
 
-    // Formation 2: Top Luminous Cyan/Turquoise Arc
-    // Hugs the top curve of the sphere inside the rim
-    const topArcStartAngle = Math.PI * 1.08;
-    const topArcEndAngle = Math.PI * 1.84;
-    const topArcRadius = r * 0.935;
+    // Formation 2: Top Swooping Cyan/Turquoise Light Crest
+    // Traverses dynamically across the upper-right hemisphere matching target artwork
+    const p2_start = { x: cx - r * 0.12, y: cy - r * 0.93 };
+    const p2_c1 = { x: cx + r * 0.32, y: cy - r * 0.82 };
+    const p2_c2 = { x: cx + r * 0.66, y: cy - r * 0.5 };
+    const p2_end = { x: cx + r * 0.76, y: cy - r * 0.02 };
 
     const topArcGrad = ctx.createLinearGradient(
-      cx - r * 0.6,
-      cy - r * 0.8,
-      cx + r * 0.6,
-      cy - r * 0.5
+      p2_start.x,
+      p2_start.y,
+      p2_end.x,
+      p2_end.y
     );
-    topArcGrad.addColorStop(0, 'rgba(168, 85, 247, 0.4)');
+    topArcGrad.addColorStop(0, 'rgba(192, 132, 252, 0.35)');
     topArcGrad.addColorStop(0.2, '#00f5ff');
     topArcGrad.addColorStop(0.65, '#38bdf8');
-    topArcGrad.addColorStop(0.9, '#6366f1');
-    topArcGrad.addColorStop(1, 'rgba(168, 85, 247, 0.2)');
+    topArcGrad.addColorStop(0.88, '#6366f1');
+    topArcGrad.addColorStop(1, 'rgba(168, 85, 247, 0.15)');
 
-    // Wide diffuse arc
+    // Wide diffuse crest
     ctx.strokeStyle = topArcGrad;
-    ctx.lineWidth = 18 * scale;
-    ctx.globalAlpha = 0.3 * glow;
+    ctx.lineWidth = 26 * scale;
+    ctx.globalAlpha = 0.42 * glow;
     ctx.beginPath();
-    ctx.arc(cx, cy, topArcRadius, topArcStartAngle, topArcEndAngle);
+    ctx.moveTo(p2_start.x, p2_start.y);
+    ctx.bezierCurveTo(p2_c1.x, p2_c1.y, p2_c2.x, p2_c2.y, p2_end.x, p2_end.y);
     ctx.stroke();
 
-    // Sharp bright arc
+    // Volumetric body
+    ctx.lineWidth = 11 * scale;
+    ctx.globalAlpha = 0.78 * glow;
+    ctx.stroke();
+
+    // Sharp bright core
     ctx.lineWidth = 3.6 * scale;
-    ctx.globalAlpha = 0.95 * glow;
+    ctx.globalAlpha = 0.96 * glow;
     ctx.stroke();
 
-    // White-hot highlight on top arc
-    ctx.strokeStyle = '#e0fcff';
-    ctx.lineWidth = 1.3;
-    ctx.globalAlpha = 0.98 * glow;
-    ctx.beginPath();
-    ctx.arc(cx, cy, topArcRadius, Math.PI * 1.25, Math.PI * 1.65);
+    // Specular highlight line
+    ctx.strokeStyle = '#f0fdff';
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha = 0.85 * glow;
     ctx.stroke();
 
     // Formation 3: Top-Center Ethereal Wispy Filament (Trailing down)
@@ -365,19 +409,19 @@ export const AuraOrb: React.FC<AuraOrbProps> = ({
     ctx.stroke();
 
     // Formation 4: Center-Right Equatorial Caustic Spindle (Galaxy/silk wave)
-    const p4_start = { x: cx - r * 0.2, y: cy + r * 0.15 };
-    const p4_c1 = { x: cx + r * 0.14, y: cy - r * 0.02 };
-    const p4_end = { x: cx + r * 0.44, y: cy + r * 0.04 };
-    const p4_c2 = { x: cx + r * 0.12, y: cy + r * 0.08 };
+    const p4_start = { x: cx - r * 0.24, y: cy + r * 0.16 };
+    const p4_c1 = { x: cx + r * 0.1, y: cy - r * 0.02 };
+    const p4_end = { x: cx + r * 0.44, y: cy + r * 0.02 };
+    const p4_c2 = { x: cx + r * 0.08, y: cy + r * 0.1 };
 
     const spindleGrad = ctx.createLinearGradient(p4_start.x, 0, p4_end.x, 0);
-    spindleGrad.addColorStop(0, 'rgba(59, 130, 246, 0.15)');
-    spindleGrad.addColorStop(0.35, 'rgba(139, 92, 246, 0.85)');
-    spindleGrad.addColorStop(0.7, 'rgba(0, 212, 255, 0.75)');
-    spindleGrad.addColorStop(1, 'rgba(56, 189, 248, 0.15)');
+    spindleGrad.addColorStop(0, 'rgba(79, 70, 229, 0.2)');
+    spindleGrad.addColorStop(0.35, 'rgba(147, 51, 234, 0.95)');
+    spindleGrad.addColorStop(0.72, 'rgba(59, 130, 246, 0.85)');
+    spindleGrad.addColorStop(1, 'rgba(56, 189, 248, 0.2)');
 
     ctx.fillStyle = spindleGrad;
-    ctx.globalAlpha = 0.65 * glow;
+    ctx.globalAlpha = 0.78 * glow;
     ctx.beginPath();
     ctx.moveTo(p4_start.x, p4_start.y);
     ctx.quadraticCurveTo(p4_c1.x, p4_c1.y, p4_end.x, p4_end.y);
@@ -455,6 +499,24 @@ export const AuraOrb: React.FC<AuraOrbProps> = ({
     ctx.beginPath();
     ctx.arc(cx, cy, r, flareAngleStart, flareAngleEnd);
     ctx.stroke();
+
+    // 4D. Specular Horizon Bloom at Bottom Pole
+    const flareBloom = ctx.createRadialGradient(
+      cx,
+      cy + r * 0.97,
+      0,
+      cx,
+      cy + r * 0.97,
+      r * 0.38
+    );
+    flareBloom.addColorStop(0, `rgba(255, 255, 255, ${0.98 * glow})`);
+    flareBloom.addColorStop(0.22, `rgba(180, 245, 255, ${0.82 * glow})`);
+    flareBloom.addColorStop(0.52, `rgba(0, 212, 255, ${0.32 * glow})`);
+    flareBloom.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = flareBloom;
+    ctx.beginPath();
+    ctx.arc(cx, cy + r * 0.97, r * 0.38, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.restore();
   };
